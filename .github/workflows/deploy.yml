@@ -28,39 +28,30 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      
-      - name: Build
+      - name: Build (sets base-href to /<repo>/ for Pages)
         env:
           REPO_NAME: ${{ github.event.repository.name }}
         run: npm run build -- --base-href=/${REPO_NAME}/
 
-      
-      - name: Locate output & add SPA fallback
-        id: locate
+      - name: Find publish dir & add SPA fallback
+        id: publish
         shell: bash
         run: |
           set -e
-          # Find outputPath from angular.json (works for targets or architect), fallback to dist/<projectName>
-          OUTDIR=$(node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('angular.json','utf8'));const n=a.defaultProject||Object.keys(a.projects)[0];const p=a.projects[n]||{};const o=(p.targets?.build?.options?.outputPath)||(p.architect?.build?.options?.outputPath)||('dist/'+n);process.stdout.write(o);")
-          echo "outdir=$OUTDIR" >> $GITHUB_OUTPUT
-
-          # Copy 404.html next to index.html for SPA routing
-          if [ -f \"$OUTDIR/browser/index.html\" ]; then
-            cp \"$OUTDIR/browser/index.html\" \"$OUTDIR/browser/404.html\"
-            echo \"publish_path=$OUTDIR/browser\" >> $GITHUB_OUTPUT
-          elif [ -f \"$OUTDIR/index.html\" ]; then
-            cp \"$OUTDIR/index.html\" \"$OUTDIR/404.html\"
-            echo \"publish_path=$OUTDIR\" >> $GITHUB_OUTPUT
-          else
-            echo \"❌ Could not find index.html under $OUTDIR (or $OUTDIR/browser). Listing dist for debugging:\"
+          # Find the first index.html under dist and use its folder as publish dir
+          PUBLISH_DIR="$(dirname "$(find dist -type f -name index.html -print -quit)")"
+          if [ -z "$PUBLISH_DIR" ]; then
+            echo "❌ Could not find dist/**/index.html. Listing dist:"
             ls -R dist || true
             exit 1
           fi
+          cp "$PUBLISH_DIR/index.html" "$PUBLISH_DIR/404.html"
+          echo "dir=$PUBLISH_DIR" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ${{ steps.locate.outputs.publish_path }}
+          path: ${{ steps.publish.outputs.dir }}
 
   deploy:
     needs: build
