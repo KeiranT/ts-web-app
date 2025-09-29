@@ -1,1 +1,46 @@
-<p>availability works!</p>
+<div class="page">
+  <!-- Top: image with highlight overlay -->
+  <section class="hero">
+    <div class="image-wrap" (click)="clearSelection()">
+      <img src="/Bergen_Street.png" alt="Building" />
+      <div *ngIf="selected?.bbox as b"
+           class="highlight"
+           [style.left.%]="b.left"
+           [style.top.%]="b.top"
+           [style.width.%]="b.width"
+           [style.height.%]="b.height"
+           title="{{ selected?.id }}"></div>
+    </div>
+  </section>
+
+  <!-- Bottom: table -->
+  <section class="table-section">
+    <h1>Availability</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>Residence</th>
+          <th>Bedrooms</th>
+          <th>Bathrooms</th>
+          <th>Interior SF</th>
+          <th>Exterior SF</th>
+          <th>Price</th>
+          <th>Floorplans</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let u of units"
+            (click)="select(u)"
+            [class.selected-row]="u.id === selectedId">
+          <td>{{ u.id }}</td>
+          <td>{{ u.bedrooms }}</td>
+          <td>{{ u.bathrooms }}</td>
+          <td>{{ u.interiorSF }}</td>
+          <td>{{ u.exteriorSF || '-' }}</td>
+          <td>{{ u.price }}</td>
+          <td><a href="#" (click)="$event.preventDefault()">View / Download</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
