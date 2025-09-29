@@ -40,31 +40,20 @@ jobs:
         shell: bash
         run: |
           set -e
-          node - <<'NODE'
-          const fs = require('fs');
-          const a = JSON.parse(fs.readFileSync('angular.json','utf8'));
-          const projName = a.defaultProject || Object.keys(a.projects)[0];
-          const proj = a.projects[projName] || {};
-          const out =
-            (proj.targets && proj.targets.build && proj.targets.build.options && proj.targets.build.options.outputPath) ||
-            (proj.architect && proj.architect.build && proj.architect.build.options && proj.architect.build.options.outputPath) ||
-            `dist/${projName}`;
-          console.log(`${projName}|${out}`);
-          NODE
-          read PROJ OUTDIR <<< "$(node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('angular.json','utf8'));const n=a.defaultProject||Object.keys(a.projects)[0];const p=a.projects[n]||{};const o=(p.targets?.build?.options?.outputPath)||(p.architect?.build?.options?.outputPath)||\`dist/\${n}\`;console.log(n+'|'+o);")"
-
-          echo "project=$PROJ" >> $GITHUB_OUTPUT
+          # Find outputPath from angular.json (works for targets or architect), fallback to dist/<projectName>
+          OUTDIR=$(node -e "const fs=require('fs');const a=JSON.parse(fs.readFileSync('angular.json','utf8'));const n=a.defaultProject||Object.keys(a.projects)[0];const p=a.projects[n]||{};const o=(p.targets?.build?.options?.outputPath)||(p.architect?.build?.options?.outputPath)||('dist/'+n);process.stdout.write(o);")
           echo "outdir=$OUTDIR" >> $GITHUB_OUTPUT
 
-          # If Angular produced a 'browser' subfolder, use it; otherwise use OUTDIR directly
-          if [ -f "$OUTDIR/browser/index.html" ]; then
-            cp "$OUTDIR/browser/index.html" "$OUTDIR/browser/404.html"
-            echo "publish_path=$OUTDIR/browser" >> $GITHUB_OUTPUT
-          elif [ -f "$OUTDIR/index.html" ]; then
-            cp "$OUTDIR/index.html" "$OUTDIR/404.html"
-            echo "publish_path=$OUTDIR" >> $GITHUB_OUTPUT
+          # Copy 404.html next to index.html for SPA routing
+          if [ -f \"$OUTDIR/browser/index.html\" ]; then
+            cp \"$OUTDIR/browser/index.html\" \"$OUTDIR/browser/404.html\"
+            echo \"publish_path=$OUTDIR/browser\" >> $GITHUB_OUTPUT
+          elif [ -f \"$OUTDIR/index.html\" ]; then
+            cp \"$OUTDIR/index.html\" \"$OUTDIR/404.html\"
+            echo \"publish_path=$OUTDIR\" >> $GITHUB_OUTPUT
           else
-            echo "❌ Could not find index.html under $OUTDIR (or $OUTDIR/browser)."
+            echo \"❌ Could not find index.html under $OUTDIR (or $OUTDIR/browser). Listing dist for debugging:\"
+            ls -R dist || true
             exit 1
           fi
 
