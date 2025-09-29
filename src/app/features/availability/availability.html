@@ -2,7 +2,7 @@
   <!-- Top: image with highlight overlay -->
   <section class="hero">
     <div class="image-wrap" (click)="clearSelection()">
-      <img src="/Bergen_Street.png" alt="Building" />
+      <img src="Bergen_Street.png" alt="Building">
       <div *ngIf="selected?.bbox as b"
            class="highlight"
            [style.left.%]="b.left"

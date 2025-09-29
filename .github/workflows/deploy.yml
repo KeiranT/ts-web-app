@@ -24,7 +24,7 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
         run: npm run build -- --base-href=/${REPO_NAME}/
 
-      # Find dist/**/index.html and use that folder as publish_dir
+      
       - name: Find publish dir & add 404.html
         id: publish
         shell: bash
@@ -43,5 +43,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ${{ steps.publish.outputs.dir }}
-          # keep history off for a clean branch
+          
           force_orphan: true
