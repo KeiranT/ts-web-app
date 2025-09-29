@@ -1,18 +1,9 @@
-name: Deploy Angular to GitHub Pages
+name: Deploy (gh-pages branch)
 
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
 
 jobs:
   build:
@@ -28,33 +19,29 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Build (sets base-href to /<repo>/ for Pages)
+      - name: Build with base-href for repo pages
         env:
           REPO_NAME: ${{ github.event.repository.name }}
         run: npm run build -- --base-href=/${REPO_NAME}/
 
-      - name: Find publish dir & add SPA fallback
+      # Find dist/**/index.html and use that folder as publish_dir
+      - name: Find publish dir & add 404.html
         id: publish
         shell: bash
         run: |
           set -e
-          # Find the first index.html under dist and use its folder as publish dir
           PUBLISH_DIR="$(dirname "$(find dist -type f -name index.html -print -quit)")"
           if [ -z "$PUBLISH_DIR" ]; then
-            echo "❌ Could not find dist/**/index.html. Listing dist:"
-            ls -R dist || true
-            exit 1
+            echo "No dist/**/index.html found"; ls -R dist || true; exit 1
           fi
           cp "$PUBLISH_DIR/index.html" "$PUBLISH_DIR/404.html"
           echo "dir=$PUBLISH_DIR" >> "$GITHUB_OUTPUT"
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: ${{ steps.publish.outputs.dir }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ${{ steps.publish.outputs.dir }}
+          # keep history off for a clean branch
+          force_orphan: true
