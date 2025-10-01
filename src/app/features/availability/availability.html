@@ -25,7 +25,8 @@
           <th>Interior SF</th>
           <th>Exterior SF</th>
           <th>Price</th>
-          <th>Floorplans</th> 
+          <th>Floorplans</th>
+          <th>360 View</th>
         </tr>
       </thead>
       <tbody>
@@ -38,14 +39,16 @@
           <td>{{ u.interiorSF }}</td>
           <td>{{ u.exteriorSF || '-' }}</td>
           <td>{{ u.price }}</td>
-
-          <!-- Floorplans cell -->
+          <td>
+            <!-- restore your placeholder / normal floorplan link -->
+            <a href="#" (click)="$event.preventDefault()">View / Download</a>
+          </td>
           <td>
             <button
               class="btn-360"
               [disabled]="!hasPano(u.id)"
               (click)="$event.stopPropagation(); open360(u.id)">
-              {{ hasPano(u.id) ? 'Open 360' : 'No 360' }}
+              {{ hasPano(u.id) ? 'Open 360' : '—' }}
             </button>
           </td>
         </tr>
