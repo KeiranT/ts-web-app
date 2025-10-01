@@ -26,6 +26,7 @@
           <th>Exterior SF</th>
           <th>Price</th>
           <th>Floorplans</th>
+          <th>360 View</th> 
         </tr>
       </thead>
       <tbody>
@@ -39,8 +40,25 @@
           <td>{{ u.exteriorSF || '-' }}</td>
           <td>{{ u.price }}</td>
           <td><a href="#" (click)="$event.preventDefault()">View / Download</a></td>
+          
+          <td>
+            <button
+              class="btn-360"
+              [disabled]="!hasPano(u.id)"
+              (click)="$event.stopPropagation(); open360(u.id)">
+              {{ hasPano(u.id) ? 'Open 360' : '—' }}
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
   </section>
+</div>
+
+<!-- ADDED: 360 Modal -->
+<div class="pano-backdrop" *ngIf="isPanoOpen" (click)="close360()">
+  <div class="pano-dialog" (click)="$event.stopPropagation()">
+    <button class="pano-close" (click)="close360()">×</button>
+    <div #panoContainer class="pano-canvas" aria-label="360 viewer"></div>
+  </div>
 </div>
